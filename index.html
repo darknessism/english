@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IELTS Prep App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #8b0a17;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Mobile App Container */
+        #app-container {
+            width: 100%;
+            max-width: 414px; /* iPhone Max width */
+            height: 100vh;
+            height: 100dvh;
+            background-color: #ce1124;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Views & Navigation Animations */
+        .view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ce1124;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(100%);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .view.active {
+            transform: translateX(0);
+        }
+
+        .view.previous {
+            transform: translateX(-30%);
+            opacity: 0.8;
+        }
+
+        #home-view {
+            transform: translateX(0); /* Default active */
+            z-index: 5;
+        }
+
+        /* Content Scroll Area */
+        .scroll-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 90px; /* Space for bottom nav */
+            scrollbar-width: none;
+        }
+        .scroll-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 3D Emoji/Icon Styles */
+        .icon-3d {
+            font-size: 3rem;
+            filter: drop-shadow(0px 8px 6px rgba(0,0,0,0.15)) drop-shadow(0px 4px 2px rgba(0,0,0,0.1));
+            transition: transform 0.2s ease;
+        }
+        
+        .card-hover:active .icon-3d {
+            transform: scale(0.9);
+        }
+
+        /* Bottom Nav Styling */
+        .bottom-nav {
+            background: white;
+            border-top: 1px solid #f1f1f1;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.03);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .nav-item {
+            transition: color 0.2s;
+        }
+        .nav-item.active {
+            color: #ff6b6b;
+        }
+        .nav-item.active .nav-icon {
+            transform: translateY(-2px);
+            filter: drop-shadow(0 2px 4px rgba(255, 107, 107, 0.3));
+        }
+
+        /* Custom Input */
+        .fancy-input {
+            background: #f8f9fc;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .fancy-input:focus {
+            background: #fff;
+            border-color: #ff6b6b;
+            outline: none;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
+        }
+
+        /* Gradient Text */
+        .text-gradient {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Accordion transition */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
+        }
+        .accordion-content.expanded {
+            max-height: 500px;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            background: #e2e8f0;
+            border-radius: 999px;
+            position: relative;
+            display: flex;
+            padding: 4px;
+        }
+        .toggle-slider {
+            position: absolute;
+            height: calc(100% - 8px);
+            width: calc(50% - 4px);
+            background: white;
+            border-radius: 999px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toggle-btn {
+            flex: 1;
+            z-index: 1;
+            text-align: center;
+            padding: 6px 0;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #64748b;
+            transition: color 0.3s;
+        }
+        .toggle-btn.active {
+            color: #ff6b6b;
+        }
+
+        /* Modal */
+        #custom-modal {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #custom-modal.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal-content {
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #custom-modal.show .modal-content {
+            transform: translateY(0) scale(1);
+        }
+
+        /* Hide Scrollbar for Horizontal Lists */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+
+    <!-- ================= VIEW 1: HOME ================= -->
+    <div id="home-view" class="view active">
+        <div class="scroll-content px-5 pt-12 pb-24">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <button class="p-2 bg-white rounded-xl shadow-sm text-red-400">
+                    <i data-lucide="align-left"></i>
+                </button>
+                <div class="flex gap-3">
+                    <button class="p-2 bg-yellow-50 rounded-xl shadow-sm text-yellow-500">
+                        <i data-lucide="crown"></i>
+                    </button>
+                    <button class="p-2 text-red-400 bg-red-50 rounded-xl shadow-sm">
+                        <i data-lucide="calendar"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Greeting -->
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-white mb-1">Hello, MINH NGHIA!</h1>
+                <p class="text-red-100 text-sm italic">Prep Smart, Enjoy Learning, Reach Goal!</p>
+            </div>
+
+            <!-- IELTS Skill Practice -->
+            <h2 class="text-lg font-bold text-white mb-4">IELTS Skill Practice</h2>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <!-- Reading Card -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center card-hover cursor-pointer" onclick="navigate('reading-list-view')">
+                    <div class="icon-3d mb-2">📖</div>
+                    <h3 class="font-semibold text-gray-800 text-sm mb-1">IELTS Reading</h3>
+                    <p class="text-xs text-gray-400">500+ questions</p>
+                </div>
+                <!-- Listening Card -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center card-hover cursor-pointer">
+                    <div class="icon-3d mb-2">🎧</div>
+                    <h3 class="font-semibold text-gray-800 text-sm mb-1">IELTS Listening</h3>
+                    <p class="text-xs text-gray-400">400+ questions</p>
+                </div>
+                <!-- Writing Card -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center card-hover cursor-pointer relative pt-6">
+                    <div class="absolute top-2 left-1/2 transform -translate-x-1/2 bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded flex items-center gap-1 font-semibold whitespace-nowrap">
+                        <span>✨ AI Scoring</span>
+                    </div>
+                    <div class="icon-3d mb-2">✍️</div>
+                    <h3 class="font-semibold text-gray-800 text-sm mb-1">IELTS Writing</h3>
+                    <p class="text-xs text-gray-400">100+ samples</p>
+                </div>
+                <!-- Speaking Card -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center card-hover cursor-pointer relative pt-6">
+                    <div class="absolute top-2 left-1/2 transform -translate-x-1/2 bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded flex items-center gap-1 font-semibold whitespace-nowrap">
+                        <span>✨ AI Scoring</span>
+                    </div>
+                    <div class="icon-3d mb-2">🗣️</div>
+                    <h3 class="font-semibold text-gray-800 text-sm mb-1">IELTS Speaking</h3>
+                    <p class="text-xs text-gray-400">50+ topics</p>
+                </div>
+            </div>
+
+            <!-- IELTS Prep Section -->
+            <h2 class="text-lg font-bold text-white mb-4">IELTS Prep</h2>
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 relative overflow-hidden">
+                <div class="flex items-center gap-3 mb-2 relative z-10">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-xl shadow-inner">
+                        📋
+                    </div>
+                    <div class="bg-blue-50 text-blue-500 text-xs px-2 py-1 rounded font-medium flex items-center gap-1">
+                        <i data-lucide="check-circle" class="w-3 h-3"></i> Format-accurate IELTS Tests
+                    </div>
+                </div>
+                <div class="flex justify-between items-center relative z-10 mt-3">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Full Test</h3>
+                        <p class="text-sm text-gray-400">200 tests</p>
+                    </div>
+                    <button class="w-8 h-8 bg-red-400 text-white rounded-full flex items-center justify-center shadow-md">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fundamentals Section -->
+            <div class="flex items-center justify-center mb-4">
+                <div class="h-px bg-red-400 flex-1"></div>
+                <span class="px-3 text-sm text-white font-medium uppercase tracking-wider">Fundamentals</span>
+                <div class="h-px bg-red-400 flex-1"></div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer card-hover" onclick="navigate('vocabulary-hub-view')">
+                    <div class="flex items-center gap-4">
+                        <div class="icon-3d text-2xl">🔤</div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">IELTS Vocabulary</h3>
+                            <p class="text-xs text-gray-400">3000+ words</p>
+                        </div>
+                    </div>
+                    <button class="w-7 h-7 bg-red-400 text-white rounded-full flex items-center justify-center shadow-md">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="icon-3d text-2xl">📚</div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">IELTS Grammar</h3>
+                            <p class="text-xs text-gray-400">2400+ questions</p>
+                        </div>
+                    </div>
+                    <button class="w-7 h-7 bg-red-400 text-white rounded-full flex items-center justify-center shadow-md">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav absolute bottom-0 left-0 w-full px-6 py-4 flex justify-between items-center z-20">
+            <div class="nav-item active flex flex-col items-center gap-1 cursor-pointer">
+                <div class="nav-icon bg-red-100 p-2 rounded-xl text-red-500">
+                    <i data-lucide="home"></i>
+                </div>
+                <span class="text-[10px] font-semibold">Home</span>
+            </div>
+            <div class="nav-item text-gray-400 flex flex-col items-center gap-1 cursor-pointer">
+                <div class="nav-icon p-2">
+                    <i data-lucide="bar-chart-2"></i>
+                </div>
+                <span class="text-[10px] font-semibold">Statistic</span>
+            </div>
+            <div class="nav-item text-gray-400 flex flex-col items-center gap-1 cursor-pointer">
+                <div class="nav-icon p-2">
+                    <i data-lucide="settings"></i>
+                </div>
+                <span class="text-[10px] font-semibold">Setting</span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= VIEW 2: READING LIST ================= -->
+    <div id="reading-list-view" class="view">
+        
+        <!-- Header -->
+        <div class="px-5 pt-12 pb-4 bg-[#ce1124] flex items-center justify-between shadow-sm z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="navigateBack()" class="p-2 text-white hover:bg-[#a60d1c] rounded-full transition">
+                    <i data-lucide="arrow-left"></i>
+                </button>
+                <h1 class="text-xl font-bold text-white">IELTS Reading</h1>
+            </div>
+            <button class="p-2 bg-yellow-50 rounded-xl text-yellow-500">
+                <i data-lucide="crown"></i>
+            </button>
+        </div>
+
+        <div class="scroll-content px-5 py-6 space-y-4">
+            
+            <!-- Accordion Item 1 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-4 flex items-center justify-between cursor-pointer" onclick="toggleAccordion('acc-1', this)">
+                    <div class="flex items-center gap-4">
+                        <div class="text-3xl filter drop-shadow-md relative">
+                            💬
+                            <div class="absolute -top-1 -right-1 text-xl">💡</div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm">READING PASSAGE 1</h3>
+                            <div class="bg-red-50 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 inline-block">
+                                28 TESTS - 0% CORRECT
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-red-400 flex items-center justify-center text-white shadow icon-toggle transition-transform duration-300">
+                        <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                
+                <!-- Accordion Content -->
+                <div id="acc-1" class="accordion-content bg-gray-50">
+                    <div class="p-4 space-y-3">
+                        
+                        <!-- Lesson Card -->
+                        <div class="bg-white rounded-xl p-3 border border-gray-100 shadow-sm cursor-pointer hover:border-red-200 transition" onclick="navigate('lesson-view')">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex gap-3">
+                                    <div class="text-2xl drop-shadow">📘</div>
+                                    <h4 class="font-bold text-gray-800 text-sm leading-tight max-w-[150px]">NUTMEG - A VALUABLE</h4>
+                                </div>
+                                <span class="bg-blue-50 text-blue-500 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                                    ✨ New
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center bg-gray-50 rounded-lg p-2">
+                                <span class="text-xs text-gray-500 font-medium">Correct: 0%</span>
+                                <div class="w-6 h-6 rounded-full bg-red-400 flex items-center justify-center text-white">
+                                    <i data-lucide="chevrons-right" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lesson Card -->
+                        <div class="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex gap-3">
+                                    <div class="text-2xl drop-shadow">📘</div>
+                                    <h4 class="font-bold text-gray-800 text-sm leading-tight max-w-[150px]">ROMAN TUNNELS</h4>
+                                </div>
+                                <span class="bg-blue-50 text-blue-500 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                                    ✨ New
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center bg-gray-50 rounded-lg p-2">
+                                <span class="text-xs text-gray-500 font-medium">Correct: 0%</span>
+                                <div class="w-6 h-6 rounded-full bg-red-400 flex items-center justify-center text-white">
+                                    <i data-lucide="chevrons-right" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- List Item 2 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="text-3xl filter drop-shadow-md relative">
+                        💬<div class="absolute -top-1 -right-1 text-xl">💡</div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-sm">READING PASSAGE 2</h3>
+                        <div class="bg-red-50 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 inline-block">
+                            28 TESTS - 1% CORRECT
+                        </div>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-red-400 flex items-center justify-center text-white shadow">
+                    <i data-lucide="check" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- List Item 3 -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="text-3xl filter drop-shadow-md relative">
+                        💬<div class="absolute -top-1 -right-1 text-xl">💡</div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-sm">READING PASSAGE 3</h3>
+                        <div class="bg-red-50 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 inline-block">
+                            28 TESTS - 0% CORRECT
+                        </div>
+                    </div>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-red-400 flex items-center justify-center text-white shadow">
+                    <i data-lucide="check" class="w-5 h-5"></i>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+
+    <!-- ================= VIEW 3: READING LESSON & QUESTIONS ================= -->
+    <div id="lesson-view" class="view">
+        
+        <!-- Header -->
+        <div class="px-5 pt-12 pb-4 bg-[#ce1124] flex items-center justify-between shadow-sm z-20">
+            <div class="flex items-center gap-3">
+                <button onclick="navigateBack()" class="p-2 bg-[#a60d1c] text-white rounded-full transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <h1 class="text-sm font-bold text-white truncate w-40">NUTMEG - A VALUA...</h1>
+            </div>
+            <div class="flex gap-2">
+                <button class="p-2 bg-yellow-50 rounded-xl text-yellow-500">
+                    <i data-lucide="crown" class="w-5 h-5"></i>
+                </button>
+                <button class="p-2 bg-white rounded-xl text-red-600">
+                    <i data-lucide="flag" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Custom Toggle Switch -->
+        <div class="bg-[#ce1124] px-5 pb-3 border-b border-[#a60d1c] shadow-sm z-10 relative">
+            <div class="toggle-switch">
+                <div id="slider-pill" class="toggle-slider transform translate-x-0"></div>
+                <button id="btn-questions" class="toggle-btn active" onclick="switchTab('questions')">Questions 1-4</button>
+                <button id="btn-passage" class="toggle-btn" onclick="switchTab('passage')">Reading Passage</button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="scroll-content bg-white relative">
+            
+            <!-- Questions Tab -->
+            <div id="tab-questions" class="absolute top-0 left-0 w-full h-full p-5 transition-opacity duration-300">
+                <p class="text-sm text-gray-600 leading-relaxed mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    The leaves of the tree are <span class="font-bold text-red-400">(1)</span> <span class="border-b-2 border-gray-300 inline-block w-24"></span> in shape.<br><br>
+                    The <span class="font-bold text-red-400">(2)</span> <span class="border-b-2 border-gray-300 inline-block w-24"></span> surrounds the fruit and breaks open when the fruit is ripe.<br><br>
+                    The <span class="font-bold text-red-400">(3)</span> <span class="border-b-2 border-gray-300 inline-block w-24"></span> is used to produce the spice nutmeg.<br><br>
+                    The covering known as the aril is used to produce <span class="font-bold text-red-400">(4)</span> <span class="border-b-2 border-gray-300 inline-block w-24"></span>.
+                </p>
+
+                <h3 class="font-bold text-center text-lg mb-4 text-gray-800">Your answer</h3>
+                
+                <div class="space-y-3 pb-24">
+                    <div class="flex items-center gap-3">
+                        <span class="text-gray-500 font-semibold">(1)</span>
+                        <input type="text" id="ans-1" placeholder="Type your response" class="fancy-input w-full p-3 rounded-xl text-sm" autocomplete="off">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-gray-500 font-semibold">(2)</span>
+                        <input type="text" id="ans-2" placeholder="Type your response" class="fancy-input w-full p-3 rounded-xl text-sm" autocomplete="off">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-gray-500 font-semibold">(3)</span>
+                        <input type="text" id="ans-3" placeholder="Type your response" class="fancy-input w-full p-3 rounded-xl text-sm" autocomplete="off">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-gray-500 font-semibold">(4)</span>
+                        <input type="text" id="ans-4" placeholder="Type your response" class="fancy-input w-full p-3 rounded-xl text-sm" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- Sticky Check Button -->
+                <div class="absolute bottom-6 left-5 right-5">
+                    <button onclick="checkAnswers()" class="w-full bg-red-400 hover:bg-red-500 text-white font-bold py-4 rounded-2xl shadow-[0_8px_15px_rgba(248,113,113,0.3)] transition-transform active:scale-95 flex items-center justify-center gap-2 text-lg">
+                        Check <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Passage Tab (Hidden by default) -->
+            <div id="tab-passage" class="absolute top-0 left-0 w-full h-full p-5 transition-opacity duration-300 opacity-0 pointer-events-none overflow-y-auto">
+                <h2 class="text-red-400 font-bold text-sm mb-2 uppercase tracking-wide">Reading Passage 1</h2>
+                <p class="text-xs text-gray-500 mb-4 bg-yellow-50 p-3 rounded-lg italic">
+                    You should spend about 20 minutes on Questions 1-13, which are based on Reading Passage 1 below:
+                </p>
+                <h1 class="text-2xl font-bold text-gray-800 mb-4">Nutmeg - a valuable spice</h1>
+                <div class="text-sm text-gray-700 leading-relaxed space-y-4">
+                    <p>
+                        The nutmeg tree, <i>Myristica fragrans</i>, is a large evergreen tree native to Southeast Asia. Until the late 18th century, it only grew in one place in the world: a small group of islands in the Banda Sea, part of the Moluccas—or Spice Islands—in northeastern Indonesia.
+                    </p>
+                    <p>
+                        The tree is thickly branched with dense foliage of tough, dark green <span class="bg-yellow-200 px-1 rounded">oval</span> leaves, and produces small, yellow, bell-shaped flowers and pale yellow pear-shaped fruits. The fruit is encased in a <span class="bg-yellow-200 px-1 rounded">fleshy husk</span>. When the fruit is ripe, this husk splits into two halves along a ridge running the length of the fruit.
+                    </p>
+                    <p>
+                        Inside is a purple-brown shiny <span class="bg-yellow-200 px-1 rounded">seed</span>, 2-3 cm long by about 2cm across, surrounded by a lacy red or crimson covering called an "aril". These are the sources of the two spices nutmeg and <span class="bg-yellow-200 px-1 rounded">mace</span>, the former being produced from the dried seed and the latter from the aril.
+                    </p>
+                    <p>
+                        Nutmeg was a highly prized and costly ingredient in European cuisine in the Middle Ages, and was used as a flavoring, medicinal, and preservative agent. Throughout this period, the Arabs were the exclusive importers of the spice to Europe.
+                    </p>
+                </div>
+                <div class="h-10"></div> <!-- spacing -->
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================= CUSTOM MODAL (For Check Answer result) ================= -->
+    <div id="custom-modal" class="absolute inset-0 z-50 flex items-center justify-center p-5">
+        <div class="modal-content bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl flex flex-col items-center text-center">
+            <div id="modal-icon" class="text-6xl mb-4 drop-shadow-md">🎉</div>
+            <h2 id="modal-title" class="text-2xl font-bold text-gray-800 mb-2">Great Job!</h2>
+            <p id="modal-desc" class="text-gray-600 text-sm mb-6">You've successfully answered the questions.</p>
+            <button onclick="closeModal()" class="w-full bg-red-400 hover:bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95">
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= VIEW 4: VOCABULARY HUB ================= -->
+    <div id="vocabulary-hub-view" class="view">
+        
+        <!-- Header -->
+        <div class="px-5 pt-12 pb-4 bg-[#ce1124] flex items-center justify-between shadow-sm z-20 relative">
+            <div class="flex items-center gap-3">
+                <button onclick="navigateBack()" class="p-2 text-white hover:bg-[#a60d1c] rounded-full transition">
+                    <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+                <h1 class="text-xl font-bold text-white">Vocabulary Hub</h1>
+            </div>
+            <button class="p-2 bg-white/20 rounded-xl text-white">
+                <i data-lucide="bookmark" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="scroll-content bg-gray-50 flex flex-col">
+            
+            <!-- Hero Section -->
+            <div class="bg-[#ce1124] px-5 pb-6 text-white shadow-sm z-10 relative">
+                <p class="text-sm text-red-200 mb-4">Welcome back. You've mastered <strong class="text-white">142 words</strong>.</p>
+                
+                <!-- Search Bar -->
+                <div class="relative mb-5">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 text-red-200 w-5 h-5"></i>
+                    <input type="text" placeholder="Search specific words..." class="w-full bg-[#a60d1c] border border-[#a60d1c] rounded-xl py-2.5 pl-10 pr-4 text-white placeholder-red-200 focus:outline-none focus:ring-2 focus:ring-white/30 transition text-sm shadow-inner">
+                </div>
+
+                <!-- Topic Carousel -->
+                <div class="flex overflow-x-auto gap-3 hide-scrollbar -mx-5 px-5 pb-2">
+                    <button class="bg-white text-[#ce1124] px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap shadow-md">The Environment</button>
+                    <button class="bg-white/10 text-white border border-white/20 px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap hover:bg-white/20 transition">Technology & Innovation</button>
+                    <button class="bg-white/10 text-white border border-white/20 px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap hover:bg-white/20 transition">Education & Society</button>
+                    <button class="bg-white/10 text-white border border-white/20 px-4 py-2 rounded-xl font-medium text-sm whitespace-nowrap hover:bg-white/20 transition">Health & Diet</button>
+                </div>
+            </div>
+
+            <!-- The List (Horizontal adaptation for Mobile) -->
+            <div class="bg-white py-3 border-b border-gray-200 z-0">
+                <div class="flex overflow-x-auto gap-2 hide-scrollbar px-5" id="vocab-word-list">
+                    <button id="btn-proliferate" onclick="selectWord('proliferate')" class="vocab-word-btn bg-red-400 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm whitespace-nowrap">Proliferate</button>
+                    <button id="btn-mitigate" onclick="selectWord('mitigate')" class="vocab-word-btn bg-gray-50 text-gray-500 border border-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap hover:bg-gray-100">Mitigate</button>
+                    <button id="btn-deteriorate" onclick="selectWord('deteriorate')" class="vocab-word-btn bg-gray-50 text-gray-500 border border-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap hover:bg-gray-100">Deteriorate</button>
+                    <button id="btn-ubiquitous" onclick="selectWord('ubiquitous')" class="vocab-word-btn bg-gray-50 text-gray-500 border border-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap hover:bg-gray-100">Ubiquitous</button>
+                </div>
+            </div>
+
+            <!-- The Interactive Word Card -->
+            <div class="px-5 pt-5 pb-8 flex-1">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6 relative overflow-hidden">
+                    <!-- Top Bar -->
+                    <div class="flex justify-between items-start mb-5">
+                        <div>
+                            <h2 id="vocab-title" class="text-3xl font-bold text-gray-800 mb-1">Proliferate</h2>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span id="vocab-phonetic" class="text-sm text-gray-500">/prəˈlɪf.ə.reɪt/</span>
+                                <span id="vocab-pos" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase">Verb</span>
+                                <span class="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded uppercase flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3"></i> <span id="vocab-band-text">Band 8.0</span></span>
+                            </div>
+                        </div>
+                        <button class="w-10 h-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-100 transition shadow-sm active:scale-95">
+                            <i data-lucide="volume-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Tabs Navigation -->
+                    <div class="flex border-b border-gray-100 mb-5">
+                        <button class="vocab-tab active flex-1 pb-3 text-xs font-bold text-red-500 border-b-2 border-red-500 text-center uppercase tracking-wider transition" onclick="switchVocabTab('context', this)">Meaning</button>
+                        <button class="vocab-tab flex-1 pb-3 text-xs font-bold text-gray-400 border-b-2 border-transparent text-center uppercase tracking-wider transition hover:text-gray-600" onclick="switchVocabTab('collocations', this)">Collocations</button>
+                        <button class="vocab-tab flex-1 pb-3 text-xs font-bold text-gray-400 border-b-2 border-transparent text-center uppercase tracking-wider transition hover:text-gray-600" onclick="switchVocabTab('tips', this)">Usage</button>
+                    </div>
+
+                    <!-- Tab 1: Meaning & Context -->
+                    <div id="vtab-context" class="vocab-tab-content block animate-fade-in">
+                        <p class="text-sm text-gray-800 font-medium mb-5 bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-inner">
+                            <span class="text-red-500 font-bold mr-1 block mb-1 text-xs uppercase tracking-wider">Definition:</span>
+                            <span id="vocab-def">To increase rapidly in number or amount; to multiply.</span>
+                        </p>
+                        
+                        <div class="mb-4 relative">
+                            <div class="absolute -left-2 top-0 bottom-0 w-1 bg-blue-400 rounded-r"></div>
+                            <div class="pl-3">
+                                <span class="text-[10px] font-bold text-blue-500 uppercase tracking-wider block mb-1 flex items-center gap-1"><i data-lucide="book-open" class="w-3 h-3"></i> Reading Context</span>
+                                <p id="vocab-read-ctx" class="text-sm text-gray-600 italic">"Despite government regulations, unauthorized wildlife trading markets have continued to <strong class="text-gray-800 bg-yellow-100 px-1 rounded">proliferate</strong> across the region."</p>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <div class="absolute -left-2 top-0 bottom-0 w-1 bg-green-400 rounded-r"></div>
+                            <div class="pl-3">
+                                <span class="text-[10px] font-bold text-green-500 uppercase tracking-wider block mb-1 flex items-center gap-1"><i data-lucide="pen-tool" class="w-3 h-3"></i> Writing Task 2 Context</span>
+                                <p id="vocab-write-ctx" class="text-sm text-gray-800">"The last decade has seen a <strong class="text-red-500 bg-red-50 px-1 rounded">proliferation</strong> of social media platforms, which has fundamentally altered how teenagers communicate."</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Collocations & Synonyms -->
+                    <div id="vtab-collocations" class="vocab-tab-content hidden animate-fade-in">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">High-Scoring Pairings</h3>
+                        <div class="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
+                            <ul id="vocab-collocations" class="space-y-3">
+                                <li class="flex items-center gap-3 text-sm text-gray-700 font-medium"><div class="w-6 h-6 rounded bg-red-100 text-red-500 flex items-center justify-center text-xs"><i data-lucide="link" class="w-3 h-3"></i></div> Rapidly proliferate</li>
+                                <li class="flex items-center gap-3 text-sm text-gray-700 font-medium"><div class="w-6 h-6 rounded bg-red-100 text-red-500 flex items-center justify-center text-xs"><i data-lucide="link" class="w-3 h-3"></i></div> Proliferate uncontrollably</li>
+                                <li class="flex items-center gap-3 text-sm text-gray-700 font-medium"><div class="w-6 h-6 rounded bg-red-100 text-red-500 flex items-center justify-center text-xs"><i data-lucide="link" class="w-3 h-3"></i></div> A proliferation of <span class="text-xs text-gray-400 font-normal ml-auto">(Noun form)</span></li>
+                            </ul>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                <h3 class="text-[10px] font-bold text-green-500 uppercase tracking-wider mb-2">Synonyms</h3>
+                                <div id="vocab-synonyms" class="flex flex-col gap-1">
+                                    <span class="text-xs text-gray-600 bg-gray-50 py-1 px-2 rounded font-medium border border-gray-100">Multiply</span>
+                                    <span class="text-xs text-gray-600 bg-gray-50 py-1 px-2 rounded font-medium border border-gray-100">Mushroom</span>
+                                    <span class="text-xs text-gray-600 bg-gray-50 py-1 px-2 rounded font-medium border border-gray-100">Burgeon</span>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-2">Antonyms</h3>
+                                <div id="vocab-antonyms" class="flex flex-col gap-1">
+                                    <span class="text-xs text-gray-600 bg-gray-50 py-1 px-2 rounded font-medium border border-gray-100">Dwindle</span>
+                                    <span class="text-xs text-gray-600 bg-gray-50 py-1 px-2 rounded font-medium border border-gray-100">Decrease</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: IELTS Application -->
+                    <div id="vtab-tips" class="vocab-tab-content hidden animate-fade-in">
+                        <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-4 relative overflow-hidden">
+                            <div class="absolute -right-4 -bottom-4 opacity-10 text-blue-500"><i data-lucide="award" class="w-24 h-24"></i></div>
+                            <div class="flex items-start gap-3 relative z-10">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-1">Examiner Tip</h4>
+                                    <p id="vocab-tip" class="text-sm text-blue-900 leading-relaxed">
+                                        Use <strong>"proliferation of"</strong> in Task 2 introductions when discussing modern trends (like technology, globalization, or urbanization) to immediately set a high tone for your Lexical Resource score.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Your Context Zone -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative">
+                    <div class="bg-gray-800 p-3 text-center">
+                        <h3 class="font-bold text-white text-sm flex items-center justify-center gap-2 uppercase tracking-wide">
+                            <i data-lucide="target" class="w-4 h-4 text-red-400"></i> Test Your Context
+                        </h3>
+                    </div>
+                    <div class="p-5">
+                        <p id="vocab-practice-sentence" class="text-sm text-gray-700 leading-loose mb-5 font-medium">
+                            "The number of online courses has 
+                            <select id="vocab-practice-select" class="inline-block bg-gray-50 border-b-2 border-gray-300 text-red-500 font-bold py-1 px-2 text-sm focus:outline-none focus:border-red-500 mx-1 cursor-pointer transition">
+                                <option value="">[ select word ]</option>
+                                <option value="mitigated">mitigated</option>
+                                <option value="proliferated">proliferated</option>
+                                <option value="hindered">hindered</option>
+                            </select>
+                            since the pandemic began."
+                        </p>
+                        
+                        <button onclick="checkVocabPractice()" class="w-full bg-[#ce1124] text-white font-bold py-3 rounded-xl shadow-md transition hover:bg-[#a60d1c] active:scale-95 text-sm flex justify-center items-center gap-2">
+                            Check Answer <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        </button>
+                        
+                        <div id="vocab-practice-feedback" class="mt-4 p-3 rounded-lg hidden text-sm font-semibold flex items-center gap-2">
+                            <!-- Feedback injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Navigation Logic
+    let viewHistory = ['home-view'];
+
+    function navigate(viewId) {
+        const currentView = document.getElementById(viewHistory[viewHistory.length - 1]);
+        const nextView = document.getElementById(viewId);
+        
+        currentView.classList.remove('active');
+        currentView.classList.add('previous');
+        
+        nextView.classList.remove('previous');
+        nextView.classList.add('active');
+        
+        viewHistory.push(viewId);
+    }
+
+    function navigateBack() {
+        if (viewHistory.length <= 1) return;
+        
+        const currentViewId = viewHistory.pop();
+        const currentView = document.getElementById(currentViewId);
+        const prevViewId = viewHistory[viewHistory.length - 1];
+        const prevView = document.getElementById(prevViewId);
+        
+        currentView.classList.remove('active');
+        // Reset transform so it slides right
+        currentView.style.transform = 'translateX(100%)'; 
+        
+        setTimeout(() => {
+            currentView.style.transform = ''; // Clear inline style
+        }, 300);
+
+        prevView.classList.remove('previous');
+        prevView.classList.add('active');
+    }
+
+    // Accordion Logic
+    function toggleAccordion(contentId, headerElement) {
+        const content = document.getElementById(contentId);
+        const icon = headerElement.querySelector('.icon-toggle');
+        
+        if (content.classList.contains('expanded')) {
+            content.classList.remove('expanded');
+            icon.style.transform = 'rotate(0deg)';
+            icon.classList.remove('bg-gray-200', 'text-gray-500');
+            icon.classList.add('bg-red-400', 'text-white');
+        } else {
+            content.classList.add('expanded');
+            icon.style.transform = 'rotate(180deg)';
+            // Change color when expanded to match PDF aesthetic
+            icon.classList.remove('bg-red-400', 'text-white');
+            icon.classList.add('bg-gray-200', 'text-gray-500');
+        }
+    }
+
+    // Tab Switch Logic in Lesson View
+    function switchTab(tab) {
+        const slider = document.getElementById('slider-pill');
+        const btnQ = document.getElementById('btn-questions');
+        const btnP = document.getElementById('btn-passage');
+        const contentQ = document.getElementById('tab-questions');
+        const contentP = document.getElementById('tab-passage');
+
+        if (tab === 'questions') {
+            slider.style.transform = 'translateX(0)';
+            btnQ.classList.add('active');
+            btnP.classList.remove('active');
+            
+            contentQ.style.opacity = '1';
+            contentQ.style.pointerEvents = 'all';
+            contentP.style.opacity = '0';
+            contentP.style.pointerEvents = 'none';
+        } else {
+            slider.style.transform = 'translateX(100%)';
+            btnP.classList.add('active');
+            btnQ.classList.remove('active');
+            
+            contentP.style.opacity = '1';
+            contentP.style.pointerEvents = 'all';
+            contentQ.style.opacity = '0';
+            contentQ.style.pointerEvents = 'none';
+        }
+    }
+
+    // Answer Checking & Modal Logic
+    const correctAnswers = ["oval", "fleshy husk", "seed", "mace"]; // or "dried seed" for 3
+
+    function checkAnswers() {
+        const a1 = document.getElementById('ans-1').value.trim().toLowerCase();
+        const a2 = document.getElementById('ans-2').value.trim().toLowerCase();
+        const a3 = document.getElementById('ans-3').value.trim().toLowerCase();
+        const a4 = document.getElementById('ans-4').value.trim().toLowerCase();
+
+        let score = 0;
+        if(a1 === correctAnswers[0]) score++;
+        if(a2 === correctAnswers[1] || a2 === "husk") score++;
+        if(a3 === correctAnswers[2] || a3 === "dried seed") score++;
+        if(a4 === correctAnswers[3]) score++;
+
+        const modal = document.getElementById('custom-modal');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDesc = document.getElementById('modal-desc');
+
+        if (score === 4) {
+            modalIcon.textContent = "🏆";
+            modalTitle.textContent = "Perfect Score!";
+            modalTitle.className = "text-2xl font-bold text-green-500 mb-2";
+            modalDesc.textContent = "You got all 4 questions right! Keep up the great work.";
+        } else if (score > 0) {
+            modalIcon.textContent = "⭐";
+            modalTitle.textContent = "Good Effort!";
+            modalTitle.className = "text-2xl font-bold text-yellow-500 mb-2";
+            modalDesc.textContent = `You got ${score} out of 4 correct. Review the passage and try again.`;
+        } else {
+            modalIcon.textContent = "💪";
+            modalTitle.textContent = "Keep Trying!";
+            modalTitle.className = "text-2xl font-bold text-red-500 mb-2";
+            modalDesc.textContent = "You didn't get any right this time. Read carefully and try again!";
+        }
+
+        modal.classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('custom-modal').classList.remove('show');
+    }
+
+    // Vocabulary Hub Tab Switching Logic
+    function switchVocabTab(tabName, element) {
+        // Hide all contents
+        document.querySelectorAll('.vocab-tab-content').forEach(el => {
+            el.classList.add('hidden');
+            el.classList.remove('block');
+        });
+        
+        // Reset all tabs styles
+        document.querySelectorAll('.vocab-tab').forEach(el => {
+            el.classList.remove('text-red-500', 'border-red-500');
+            el.classList.add('text-gray-400', 'border-transparent');
+        });
+        
+        // Show active content
+        const targetContent = document.getElementById('vtab-' + tabName);
+        targetContent.classList.remove('hidden');
+        targetContent.classList.add('block');
+        
+        // Set active tab style
+        element.classList.remove('text-gray-400', 'border-transparent');
+        element.classList.add('text-red-500', 'border-red-500');
+    }
+
+    // Vocabulary Data Database
+    let currentVocabCorrectAnswer = 'proliferated';
+
+    const vocabDatabase = {
+        'proliferate': {
+            word: 'Proliferate',
+            phonetic: '/prəˈlɪf.ə.reɪt/',
+            pos: 'Verb',
+            band: '8.0',
+            def: 'To increase rapidly in number or amount; to multiply.',
+            readCtx: 'Despite government regulations, unauthorized wildlife trading markets have continued to <strong class="text-gray-800 bg-yellow-100 px-1 rounded">proliferate</strong> across the region.',
+            writeCtx: 'The last decade has seen a <strong class="text-red-500 bg-red-50 px-1 rounded">proliferation</strong> of social media platforms, which has fundamentally altered how teenagers communicate.',
+            collocations: ['Rapidly proliferate', 'Proliferate uncontrollably', 'A proliferation of <span class="text-xs text-gray-400 font-normal ml-auto">(Noun form)</span>'],
+            synonyms: ['Multiply', 'Mushroom', 'Burgeon'],
+            antonyms: ['Dwindle', 'Decrease'],
+            tip: 'Use <strong>"proliferation of"</strong> in Task 2 introductions when discussing modern trends (like technology, globalization, or urbanization) to immediately set a high tone for your Lexical Resource score.',
+            practiceText: 'The number of online courses has [SELECT] since the pandemic began.',
+            practiceOptions: ['mitigated', 'proliferated', 'hindered'],
+            correctAnswer: 'proliferated'
+        },
+        'mitigate': {
+            word: 'Mitigate',
+            phonetic: '/ˈmɪt.ɪ.ɡeɪt/',
+            pos: 'Verb',
+            band: '7.5',
+            def: 'Make less severe, serious, or painful.',
+            readCtx: 'Planting trees is one of the most effective ways to <strong class="text-gray-800 bg-yellow-100 px-1 rounded">mitigate</strong> the effects of climate change.',
+            writeCtx: 'Governments must take immediate action to <strong class="text-red-500 bg-red-50 px-1 rounded">mitigate</strong> the negative impacts of rapid urbanization.',
+            collocations: ['Mitigate the impact', 'Mitigate risks', 'Mitigate consequences'],
+            synonyms: ['Alleviate', 'Reduce', 'Diminish'],
+            antonyms: ['Aggravate', 'Exacerbate'],
+            tip: '<strong>"Mitigate"</strong> is an excellent alternative to "solve" or "fix" when discussing complex global issues in Task 2 where a complete solution is unlikely.',
+            practiceText: 'Emergency funds were provided to [SELECT] the damage caused by the flood.',
+            practiceOptions: ['mitigate', 'exacerbate', 'proliferate'],
+            correctAnswer: 'mitigate'
+        },
+        'deteriorate': {
+            word: 'Deteriorate',
+            phonetic: '/dɪˈtɪə.ri.ə.reɪt/',
+            pos: 'Verb',
+            band: '7.0',
+            def: 'Become progressively worse.',
+            readCtx: 'Due to a lack of maintenance, the ancient infrastructure began to <strong class="text-gray-800 bg-yellow-100 px-1 rounded">deteriorate</strong> rapidly.',
+            writeCtx: 'If air pollution is not addressed, public health will steadily <strong class="text-red-500 bg-red-50 px-1 rounded">deteriorate</strong>.',
+            collocations: ['Rapidly deteriorate', 'Steadily deteriorate', 'Deteriorating conditions'],
+            synonyms: ['Worsen', 'Decline', 'Degrade'],
+            antonyms: ['Improve', 'Ameliorate'],
+            tip: 'Use <strong>"deteriorate"</strong> instead of "get worse" to instantly boost your vocabulary score when discussing negative trends.',
+            practiceText: 'The patient\'s condition began to [SELECT] overnight.',
+            practiceOptions: ['improve', 'deteriorate', 'mitigate'],
+            correctAnswer: 'deteriorate'
+        },
+        'ubiquitous': {
+            word: 'Ubiquitous',
+            phonetic: '/juːˈbɪk.wɪ.təs/',
+            pos: 'Adjective',
+            band: '8.5',
+            def: 'Present, appearing, or found everywhere.',
+            readCtx: 'Smartphones have become a <strong class="text-gray-800 bg-yellow-100 px-1 rounded">ubiquitous</strong> feature of modern urban life.',
+            writeCtx: 'The <strong class="text-red-500 bg-red-50 px-1 rounded">ubiquity</strong> of fast food has contributed significantly to rising obesity rates.',
+            collocations: ['Ubiquitous presence', 'Increasingly ubiquitous', 'Virtually ubiquitous'],
+            synonyms: ['Omnipresent', 'Pervasive', 'Universal'],
+            antonyms: ['Rare', 'Scarce'],
+            tip: '<strong>"Ubiquitous"</strong> is a fantastic high-level adjective to replace "everywhere" or "very common" in both Speaking Part 3 and Writing Task 2.',
+            practiceText: 'Coffee shops are [SELECT] in most major cities.',
+            practiceOptions: ['ubiquitous', 'scarce', 'deteriorating'],
+            correctAnswer: 'ubiquitous'
+        }
+    };
+
+    function selectWord(wordKey) {
+        const data = vocabDatabase[wordKey];
+        currentVocabCorrectAnswer = data.correctAnswer;
+
+        // Reset active styles on list buttons
+        document.querySelectorAll('.vocab-word-btn').forEach(btn => {
+            btn.className = 'vocab-word-btn bg-gray-50 text-gray-500 border border-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap hover:bg-gray-100';
+        });
+        
+        // Set active style to clicked button
+        const activeBtn = document.getElementById(`btn-${wordKey}`);
+        if(activeBtn) {
+            activeBtn.className = 'vocab-word-btn bg-red-400 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm whitespace-nowrap';
+        }
+
+        // Update Top Bar
+        document.getElementById('vocab-title').textContent = data.word;
+        document.getElementById('vocab-phonetic').textContent = data.phonetic;
+        document.getElementById('vocab-pos').textContent = data.pos;
+        document.getElementById('vocab-band-text').textContent = `Band ${data.band}`;
+
+        // Update Tab 1 (Meaning)
+        document.getElementById('vocab-def').textContent = data.def;
+        document.getElementById('vocab-read-ctx').innerHTML = `"${data.readCtx}"`;
+        document.getElementById('vocab-write-ctx').innerHTML = `"${data.writeCtx}"`;
+
+        // Update Tab 2 (Collocations)
+        document.getElementById('vocab-collocations').innerHTML = data.collocations.map(col => 
+            `<li class="flex items-center gap-3 text-sm text-gray-700 font-medium"><div class="w-6 h-6 rounded bg-red-100 text-red-500 flex items-center justify-center text-xs"><i data-lucide="link" class="w-3 h-3"></i></div> ${col}</li>`
+        ).join('');
+        
+        document.getElementById('vocab-synonyms').innerHTML = data.synonyms.map(syn => 
+            `<span class="text-xs text-gray-600 bg-gray-50 py-1 px-2 rounded font-medium border border-gray-100">${syn}</span>`
+        ).join('');
+        
+        document.getElementById('vocab-antonyms').innerHTML = data.antonyms.map(ant => 
+            `<span class="text-xs text-gray-600 bg-gray-50 py-1 px-2 rounded font-medium border border-gray-100">${ant}</span>`
+        ).join('');
+
+        // Update Tab 3 (Usage Tips)
+        document.getElementById('vocab-tip').innerHTML = data.tip;
+
+        // Update Practice Zone
+        let newPracticeHtml = data.practiceText.replace('[SELECT]', `
+            <select id="vocab-practice-select" class="inline-block bg-gray-50 border-b-2 border-gray-300 text-red-500 font-bold py-1 px-2 text-sm focus:outline-none focus:border-red-500 mx-1 cursor-pointer transition">
+                <option value="">[ select word ]</option>
+                ${data.practiceOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+            </select>
+        `);
+        document.getElementById('vocab-practice-sentence').innerHTML = `"${newPracticeHtml}"`;
+
+        // Reset practice feedback
+        const feedback = document.getElementById('vocab-practice-feedback');
+        feedback.classList.add('hidden');
+        feedback.innerHTML = '';
+
+        // Auto-switch to Meaning tab when selecting a new word
+        const firstTab = document.querySelector('.vocab-tab');
+        if(firstTab) switchVocabTab('context', firstTab);
+
+        // Re-initialize icons for newly injected HTML elements
+        lucide.createIcons();
+    }
+
+    // Vocabulary Practice Check
+    function checkVocabPractice() {
+        const select = document.getElementById('vocab-practice-select');
+        const feedback = document.getElementById('vocab-practice-feedback');
+        
+        feedback.classList.remove('hidden', 'bg-green-50', 'text-green-600', 'bg-red-50', 'text-red-600', 'bg-yellow-50', 'text-yellow-600');
+        feedback.innerHTML = '';
+        
+        if (select.value === currentVocabCorrectAnswer) {
+            feedback.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5"></i> Correct! Great job using the active context.';
+            feedback.classList.add('bg-green-50', 'text-green-600');
+        } else if (select.value === '') {
+            feedback.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5"></i> Please select a word from the dropdown.';
+            feedback.classList.add('bg-yellow-50', 'text-yellow-600');
+        } else {
+            feedback.innerHTML = '<i data-lucide="x-circle" class="w-5 h-5"></i> Incorrect pairing. Try again!';
+            feedback.classList.add('bg-red-50', 'text-red-600');
+        }
+        
+        // Re-initialize lucide icons for the new elements inside feedback
+        lucide.createIcons();
+    }
+</script>
+</body>
+</html>
