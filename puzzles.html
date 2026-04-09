@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordscapes Puzzle Arena</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Fredoka -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        arenaRed: '#d9232a', 
+                        arenaDarkRed: '#a61a1d', 
+                        arenaDark: '#1e293b',
+                        btnGreen: '#00c464',
+                        btnGreenShadow: '#00994d',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #d9232a; 
+            margin: 0;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* 3D Button Press Effect */
+        .btn-3d {
+            transition: all 0.1s ease-in-out;
+        }
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 0 transparent !important;
+        }
+
+        /* Speech Bubble Tail */
+        .speech-tail {
+            position: absolute;
+            left: -10px;
+            top: 20px;
+            width: 0; 
+            height: 0; 
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent; 
+            border-right:12px solid white; 
+        }
+
+        /* Shimmer effect for progress bar */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .shimmer-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        /* Puzzle Pop Effect */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        .animate-pop {
+            animation: pop 0.3s ease-out forwards;
+        }
+
+        /* Custom Sleek Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            background: transparent;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(166, 26, 29, 0.15);
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 1);
+        }
+
+        /* 3D Effects for Grid Cells */
+        .cell-empty {
+            box-shadow: inset 0 4px 6px rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .cell-filled {
+            box-shadow: 0 4px 0 #e5e7eb, 0 6px 10px rgba(0, 0, 0, 0.2);
+            border: 2px solid #ffffff;
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.6) rgba(166, 26, 29, 0.15);
+        }
+    </style>
+</head>
+<body class="overflow-hidden bg-arenaRed">
+
+    <div class="w-full h-[100dvh] font-fredoka relative bg-arenaRed">
+        
+        <!-- Home Screen -->
+        <div id="home-screen" class="w-full h-full transition-opacity duration-300 z-10 overflow-y-auto absolute inset-0 opacity-100 pointer-events-auto">
+            <div class="w-full max-w-3xl mx-auto flex flex-col min-h-full pt-12 md:pt-16">
+                <!-- Header -->
+                <header class="flex items-center justify-between text-white mb-8 px-6">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-white/20 p-2 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                            <i class="fa-solid fa-puzzle-piece text-2xl"></i>
+                        </div>
+                        <h1 class="text-3xl font-bold tracking-wide shadow-sm uppercase">Word Puzzles</h1>
+                    </div>
+                    <button onclick="window.location.href='https://english-seven-black.vercel.app/'" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full border border-white/20 transition-all">
+                        <span class="text-xl">🏠</span>
+                        <span class="font-semibold">Homepage</span>
+                    </button>
+                </header>
+
+                <!-- Character & Speech Bubble -->
+                <div class="flex items-start px-6 gap-4 mb-8 z-10">
+                    <div class="relative">
+                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-4xl border-[3px] border-yellow-400 shadow-lg z-10 relative overflow-hidden">
+                            🧑‍🏫
+                        </div>
+                        <div class="absolute -bottom-1 -right-1 text-xl drop-shadow-md">📚</div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-4 shadow-xl flex-1 relative mt-2">
+                        <div class="speech-tail"></div>
+                        <p class="text-arenaDark font-semibold text-[15px] leading-snug">
+                            Solving Word Puzzles every day helps you stay sharp and expands your vocabulary!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Main Content Card -->
+                <div class="bg-white flex-1 rounded-t-[40px] px-6 pt-8 pb-12 flex flex-col gap-8 shadow-[0_-10px_25px_rgba(0,0,0,0.15)] relative">
+                    <div class="absolute -top-6 right-8 bg-yellow-400 text-yellow-900 px-4 py-1 rounded-full font-bold text-sm shadow-md flex items-center gap-1 border-2 border-white">
+                        <i class="fa-solid fa-star text-xs"></i> Pro Tip
+                    </div>
+
+                    <!-- Statistics Section -->
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 shadow-sm">
+                        <div class="flex justify-between items-end mb-3">
+                            <div class="flex flex-col">
+                                <span class="text-slate-400 font-bold text-xs uppercase tracking-wider mb-1">Current Rating</span>
+                                <div class="text-5xl font-bold text-arenaDark tracking-tighter leading-none flex items-center gap-2">
+                                    7,157 
+                                    <span class="text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded-lg ml-2 hidden sm:inline-block">Master</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="text-slate-400 font-bold text-xs uppercase tracking-wider mb-1">Win Streak</span>
+                                <div class="flex items-center gap-1 text-orange-500 font-bold text-2xl leading-none">
+                                    <i class="fa-solid fa-fire drop-shadow-sm"></i> 3
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-slate-200 h-4 rounded-full overflow-hidden flex relative mt-2 shadow-inner">
+                            <div class="bg-yellow-400 w-[65%] h-full rounded-full relative overflow-hidden transition-all duration-1000 ease-out" id="progressBar">
+                                <div class="shimmer-overlay"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs font-semibold text-slate-400">
+                            <span>Gold Tier</span>
+                            <span>8,000 to reach Diamond</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col gap-4">
+                        <button onclick="handleButtonClick('Solve Puzzles')" class="btn-3d w-full bg-btnGreen text-white py-5 rounded-[24px] font-bold text-2xl shadow-[0_6px_0_#00994d] flex items-center justify-center gap-3 border-2 border-white/20">
+                            Solve Puzzles
+                        </button>
+                        
+                        <button onclick="handleButtonClick('Puzzle Rush')" class="btn-3d w-full bg-slate-100 text-arenaDark py-4 rounded-[20px] font-bold text-xl shadow-[0_5px_0_#cbd5e1] flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-bolt text-orange-500 text-2xl drop-shadow-sm"></i> 
+                            Puzzle Rush
+                        </button>
+                        
+                        <button onclick="handleButtonClick('Daily Puzzle')" class="btn-3d w-full bg-slate-100 text-arenaDark py-4 rounded-[20px] font-bold text-xl shadow-[0_5px_0_#cbd5e1] flex items-center justify-center gap-3 relative overflow-hidden">
+                            <i class="fa-solid fa-calendar-check text-btnGreen text-2xl drop-shadow-sm"></i> 
+                            Daily Puzzle
+                            <span class="absolute top-4 right-5 flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                            </span>
+                        </button>
+                        
+                        <button onclick="handleButtonClick('Puzzle Battle')" class="btn-3d w-full bg-slate-100 text-arenaDark py-4 rounded-[20px] font-bold text-xl shadow-[0_5px_0_#cbd5e1] flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-shield-halved text-blue-500 text-2xl drop-shadow-sm"></i> 
+                            Puzzle Battle
+                        </button>
+                    </div>
+                    
+                    <div class="h-6"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Puzzle Game Screen -->
+        <div id="puzzle-screen" class="w-full h-full absolute inset-0 z-20 transition-opacity duration-300 opacity-0 pointer-events-none overflow-y-auto" 
+             style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.pexels.com/photos/14380639/pexels-photo-14380639.jpeg'); background-size: cover; background-position: center;">
+            
+            <div class="w-full max-w-3xl mx-auto flex flex-col min-h-full">
+                <!-- Puzzle Header -->
+                <div class="flex items-center justify-between p-6 pb-2 pt-10 md:pt-16 shrink-0">
+                    <button onclick="showScreen('home')" class="w-12 h-12 bg-black/40 rounded-full flex items-center justify-center text-white text-xl hover:bg-black/60 transition-colors btn-3d border border-white/20">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <div class="text-center text-white font-bold tracking-wider drop-shadow-lg">
+                        <div class="text-2xl uppercase">Level 2</div>
+                        <div class="text-xs opacity-80 uppercase tracking-widest">Rise 2</div>
+                    </div>
+                    <div class="bg-black/40 border border-white/20 rounded-full px-4 py-2 flex items-center gap-2 text-white font-bold text-lg shadow-lg">
+                        <i class="fa-solid fa-coins text-yellow-400"></i> 1000
+                    </div>
+                </div>
+
+                <!-- Word Grid Area -->
+                <div class="flex-1 flex items-center justify-center p-4 relative py-12">
+                    <div id="word-grid" class="grid gap-2 md:gap-3" style="grid-template-columns: repeat(6, minmax(0, 3rem)); grid-template-rows: repeat(6, minmax(0, 3rem)); justify-content: center;">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+
+                <!-- Wheel Controls Area -->
+                <div class="h-80 flex items-center justify-center relative w-full mb-10 shrink-0">
+                    <!-- Shuffle Button -->
+                    <button onclick="shuffleLetters()" class="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 border-2 border-white/30 bg-black/20 rounded-full flex items-center justify-center text-white text-xl btn-3d z-10 hover:bg-black/40 shadow-lg">
+                        <i class="fa-solid fa-shuffle"></i>
+                    </button>
+
+                    <!-- Hint Button -->
+                    <button onclick="showToast('Hint: Look for words with P, C, E, A')" class="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 border-2 border-white/30 bg-black/20 rounded-full flex items-center justify-center text-white text-2xl btn-3d z-10 hover:bg-black/40 shadow-lg">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </button>
+
+                    <!-- Letter Wheel -->
+                    <div id="wheelContainer" class="w-64 h-64 bg-arenaDarkRed rounded-full relative touch-none shadow-[inset_0_4px_10px_rgba(0,0,0,0.5)] border-4 border-white/10">
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible" viewBox="0 0 256 256">
+                            <polyline id="currentLine" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
+                        </svg>
+                        <div id="wheel-letters" class="absolute inset-0 z-10 pointer-events-none">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-arenaDark text-white px-6 py-3 rounded-full font-semibold opacity-0 transition-opacity duration-300 pointer-events-none shadow-lg z-50 flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-circle-info text-blue-400"></i>
+        <span id="toastMessage">Loading...</span>
+    </div>
+
+    <script>
+        // === Navigation & State ===
+        function showScreen(screenId) {
+            const home = document.getElementById('home-screen');
+            const puzzle = document.getElementById('puzzle-screen');
+            
+            if (screenId === 'puzzle') {
+                home.classList.add('opacity-0', 'pointer-events-none');
+                home.classList.remove('opacity-100', 'pointer-events-auto');
+                
+                puzzle.classList.remove('opacity-0', 'pointer-events-none');
+                puzzle.classList.add('opacity-100', 'pointer-events-auto');
+                initLevel();
+            } else {
+                home.classList.remove('opacity-0', 'pointer-events-none');
+                home.classList.add('opacity-100', 'pointer-events-auto');
+                
+                puzzle.classList.add('opacity-0', 'pointer-events-none');
+                puzzle.classList.remove('opacity-100', 'pointer-events-auto');
+            }
+        }
+
+        function handleButtonClick(actionName) {
+            if (actionName === 'Solve Puzzles') {
+                showScreen('puzzle');
+                return;
+            }
+            showToast(`Opening ${actionName}...`);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.textContent = message;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        // === Puzzle Game Logic ===
+        const wordsDict = {
+            "PEACE": [{r:0,c:1}, {r:0,c:2}, {r:0,c:3}, {r:0,c:4}, {r:0,c:5}],
+            "PEA":   [{r:0,c:1}, {r:1,c:1}, {r:2,c:1}],
+            "APE":   [{r:0,c:3}, {r:1,c:3}, {r:2,c:3}],
+            "ACE":   [{r:2,c:1}, {r:2,c:2}, {r:2,c:3}],
+            "CAPE":  [{r:2,c:2}, {r:3,c:2}, {r:4,c:2}, {r:5,c:2}],
+            "CAP":   [{r:4,c:0}, {r:4,c:1}, {r:4,c:2}],
+            "PACE":  [{r:2,c:5}, {r:3,c:5}, {r:4,c:5}, {r:5,c:5}]
+        };
+        let currentLetters = ['P', 'C', 'E', 'E', 'A'];
+        let selectedNodes = [];
+        let isDrawing = false;
+        let foundWordsSet = new Set();
+        let wheelInitialized = false;
+
+        function initLevel() {
+            if(wheelInitialized) return; 
+            
+            const gridEl = document.getElementById('word-grid');
+            gridEl.innerHTML = '';
+            for(let r=0; r<6; r++) {
+                for(let c=0; c<6; c++) {
+                    let isCell = false;
+                    for(let w in wordsDict) {
+                       if(wordsDict[w].some(pos => pos.r === r && pos.c === c)) isCell = true;
+                    }
+                    const cell = document.createElement('div');
+                    // 3D Inset style for empty boxes
+                    cell.className = `w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center text-2xl font-bold transition-all duration-300 ${isCell ? 'bg-arenaDarkRed text-white cell-empty' : 'opacity-0'}`;
+                    cell.id = `cell-${r}-${c}`;
+                    gridEl.appendChild(cell);
+                }
+            }
+            renderWheel();
+            setupInteractions();
+            wheelInitialized = true;
+        }
+
+        function renderWheel() {
+            const container = document.getElementById('wheel-letters');
+            container.innerHTML = '';
+            const radius = 80;
+            const center = 128;
+            
+            currentLetters.forEach((letter, i) => {
+                const angle = (i * 360 / currentLetters.length) * (Math.PI / 180) - Math.PI/2;
+                const x = center + radius * Math.cos(angle);
+                const y = center + radius * Math.sin(angle);
+
+                const el = document.createElement('div');
+                el.className = 'wheel-letter absolute w-[4.5rem] h-[4.5rem] bg-white text-arenaRed rounded-full flex items-center justify-center text-4xl font-bold shadow-[0_5px_15px_rgba(0,0,0,0.3)] cursor-pointer transition-transform duration-100 pointer-events-auto select-none border-2 border-white/20';
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+                el.style.transform = 'translate(-50%, -50%)';
+                el.dataset.letter = letter;
+                el.textContent = letter;
+                
+                container.appendChild(el);
+            });
+        }
+
+        function shuffleLetters() {
+            for (let i = currentLetters.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [currentLetters[i], currentLetters[j]] = [currentLetters[j], currentLetters[i]];
+            }
+            renderWheel();
+            document.getElementById('currentLine').setAttribute('points', '');
+            selectedNodes = [];
+        }
+
+        function setupInteractions() {
+            const wheel = document.getElementById('wheelContainer');
+            
+            const handleStart = (e) => {
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                const target = document.elementFromPoint(clientX, clientY);
+                const letterNode = target ? target.closest('.wheel-letter') : null;
+
+                if (letterNode) {
+                    isDrawing = true;
+                    if(e.cancelable) e.preventDefault();
+                    addNodeToSelection(letterNode);
+                    updateLine(clientX, clientY);
+                }
+            };
+
+            const handleMove = (e) => {
+                if (!isDrawing) return;
+                if(e.cancelable) e.preventDefault(); 
+                
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                updateLine(clientX, clientY);
+
+                const target = document.elementFromPoint(clientX, clientY);
+                const letterNode = target ? target.closest('.wheel-letter') : null;
+                
+                if (letterNode && !selectedNodes.includes(letterNode)) {
+                    addNodeToSelection(letterNode);
+                }
+            };
+
+            const handleEnd = (e) => {
+                if (!isDrawing) return;
+                isDrawing = false;
+                checkWord();
+                document.getElementById('currentLine').setAttribute('points', '');
+            };
+
+            wheel.addEventListener('touchstart', handleStart, {passive: false});
+            window.addEventListener('touchmove', handleMove, {passive: false});
+            window.addEventListener('touchend', handleEnd);
+            wheel.addEventListener('mousedown', handleStart);
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('mouseup', handleEnd);
+        }
+
+        function addNodeToSelection(node) {
+            selectedNodes.push(node);
+            node.style.transform = 'translate(-50%, -50%) scale(1.15)';
+            node.classList.add('brightness-125'); 
+            if (navigator.vibrate) navigator.vibrate(20);
+        }
+
+        function updateLine(mouseX, mouseY) {
+            const wheel = document.getElementById('wheelContainer');
+            const rect = wheel.getBoundingClientRect();
+            const scaleX = 256 / rect.width;
+            const scaleY = 256 / rect.height;
+            const localX = (mouseX - rect.left) * scaleX;
+            const localY = (mouseY - rect.top) * scaleY;
+
+            let points = selectedNodes.map(node => {
+               return `${parseFloat(node.style.left)},${parseFloat(node.style.top)}`;
+            });
+            points.push(`${localX},${localY}`);
+            document.getElementById('currentLine').setAttribute('points', points.join(' '));
+        }
+
+        function checkWord() {
+            const word = selectedNodes.map(n => n.dataset.letter).join('');
+            
+            if (wordsDict[word]) {
+                if (foundWordsSet.has(word)) {
+                    showToast("Already Found!");
+                } else {
+                    foundWordsSet.add(word);
+                    revealWord(word);
+                    if(foundWordsSet.size === Object.keys(wordsDict).length) {
+                        setTimeout(() => showToast("Level Completed! 🎉"), 1000);
+                    } else {
+                        showToast("Excellent!");
+                    }
+                }
+            } else if (word.length > 1) {
+                 selectedNodes.forEach(node => {
+                    node.classList.remove('brightness-125');
+                    node.classList.add('brightness-50'); 
+                 });
+                 setTimeout(() => {
+                    resetNodesStyles();
+                 }, 300);
+                 return;
+            }
+            resetNodesStyles();
+        }
+
+        function resetNodesStyles() {
+            selectedNodes.forEach(node => {
+                node.style.transform = 'translate(-50%, -50%) scale(1)';
+                node.classList.remove('brightness-125', 'brightness-50');
+            });
+            selectedNodes = [];
+        }
+
+        function revealWord(word) {
+            const cells = wordsDict[word];
+            cells.forEach((pos, idx) => {
+                const cell = document.getElementById(`cell-${pos.r}-${pos.c}`);
+                setTimeout(() => {
+                    cell.textContent = word[idx];
+                    cell.classList.remove('bg-arenaDarkRed', 'cell-empty');
+                    // Word reveals as white boxes with 3D shadow and red text
+                    cell.classList.add('bg-white', 'text-arenaRed', 'cell-filled', 'animate-pop');
+                }, idx * 150); 
+            });
+        }
+
+        window.onload = () => {
+            const bar = document.getElementById('progressBar');
+            if (bar) {
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = '65%';
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>
